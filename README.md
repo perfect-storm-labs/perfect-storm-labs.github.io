@@ -1,25 +1,28 @@
 # perfect-storm-labs.github.io
 
 Public landing site for **FrankenBits / Perfect Storm Labs**, served via GitHub Pages at
-<https://perfect-storm-labs.github.io>. Vanilla HTML/CSS/JS (no build step) — a video-choreographed
-cinematic landing experience. Source/dev tooling lives in the private `StormForge_web` project; only
-the shippable page is mirrored here.
+<https://frankenbits.com> (custom domain; also <https://perfect-storm-labs.github.io>). Vanilla
+HTML/CSS/JS (no build step) — a video-choreographed cinematic landing experience. Source/dev
+tooling lives in the private `StormForge_web` project; only the shippable page is mirrored here.
 
 ## What's live now
-- **Outer loop** — the ambient exterior loop (`assets/intro_loop.mp4`) autoplays as the hero
-  background. This is the deployment proof.
-- The downstream journey (Enter the Lab → dive → mirror-ball hub → forge cuts) is wired in `app.js`
-  but its heavier clips are **not committed** (see Video policy). The page degrades gracefully:
-  missing clips fall back to posters/stills, so nothing strands the visitor.
+- **Full journey, end to end:** outer loop → Enter the Lab → dive → mirror-ball nav hub
+  (settle → loop) → "Explore More" → elevator → `forge_cut_1`. All referenced clips are committed
+  and serving (HTTP 200 + 206 range, so seeking/looping works).
+- Forge cuts 2–N aren't rendered yet; the autochain + silent-film intertitle machinery is in place
+  and plays whatever cuts are listed in `data-explore`. The page degrades gracefully if any clip is
+  missing (poster/still fallbacks), so nothing strands the visitor.
 
-## Video policy (important)
-GitHub's 100 MB/file limit + ~1 GB repo budget mean big clips **do not** go in this repo. They are
-hosted on a CDN (Cloudflare R2 or S3+CloudFront) and referenced by URL via `data-src` /
-`data-explore`. The one committed exception is `assets/intro_loop.mp4` (25 MB), kept so the live
-site shows motion immediately; `.gitignore` ignores all other `assets/*.mp4`.
-
-When the CDN is set up: upload the clips, then point the `data-src` (loop/dive/elevator/mirror) and
-`data-explore` (forge cuts) attributes at the hosted URLs.
+## Video policy (no CDN — clips hosted in-repo)
+Decision: **no CDN** (cost). GitHub Pages hosts the clips directly, which is free and works because
+every referenced clip is under GitHub's **100 MB/file** limit. `.gitignore` ignores only clips we
+never ship — the replaced 140 MB `forge.mp4` monolith and unreferenced files — so a stray heavy
+file can't sneak into history.
+- ⚠️ **History bloat:** re-rendering a clip (same filename, overwritten) keeps the OLD copy in git
+  history forever → the repo grows with each re-render. Commit a clip only once it's final; if the
+  repo bloats, do a deliberate `git filter-repo` history rewrite in its own session (backup first).
+- If the forge cut count grows large, revisit CDN (R2 = no egress) and swap `data-src` /
+  `data-explore` to hosted URLs then.
 
 ## The forge destination = autochained cuts
 "Explore More" takes the elevator to the forge, played as a sequence of GitHub-friendly cuts
