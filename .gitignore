@@ -1,8 +1,15 @@
-# Big video files live on a CDN (R2 / S3+CloudFront), NOT in this repo.
-# GitHub Pages has a 100 MB/file hard limit and a soft ~1 GB repo budget; videos blow past both.
-# The ambient loop is the ONE exception (force-added for a visible live proof) — see below.
-assets/*.mp4
-!assets/intro_loop.mp4
+# VIDEO POLICY — no CDN (cost); GitHub Pages hosts the clips directly.
+# Every referenced clip is committed (all are under GitHub's 100 MB/file limit). We ONLY ignore
+# clips we never ship, so a stray heavy file can't sneak into history.
+#
+# Ignored, with reason:
+assets/forge.mp4          # the old 140 MB monolith — REPLACED by forge_cut_1..N (over the file limit anyway)
+assets/hero3_intro.mp4    # not referenced by the page
+#
+# ⚠️ History note: re-rendering a clip (same filename, overwritten) keeps the OLD copy in git
+# history forever → the repo grows with each re-render. If it bloats, do a deliberate
+# history-rewrite (git filter-repo) in its own session with a backup first. Prefer committing a
+# clip only once it's final.
 
 # dev-only tooling (lives in StormForge_web, never shipped to the Pages repo)
 serve.py
