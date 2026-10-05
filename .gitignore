@@ -1,0 +1,19 @@
+# Big video files live on a CDN (R2 / S3+CloudFront), NOT in this repo.
+# GitHub Pages has a 100 MB/file hard limit and a soft ~1 GB repo budget; videos blow past both.
+# The ambient loop is the ONE exception (force-added for a visible live proof) — see below.
+assets/*.mp4
+!assets/intro_loop.mp4
+
+# dev-only tooling (lives in StormForge_web, never shipped to the Pages repo)
+serve.py
+make_web.sh
+check.sh
+__pycache__/
+*.pyc
+webdev/
+archieve/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp

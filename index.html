@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FrankenBits — Perfect Storm Labs</title>
+  <meta name="description" content="FrankenBits, LLC — acoustic detection &amp; research." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!--
+    VIDEO CHOREOGRAPHY (proof of concept)
+    ───────────────────────────────────────────
+    1. #loop-video     — muted autoplay LOOP, lab exterior (ambient hero bg).
+    2. #dive-video     — on CLICK ("Enter"), dives into the lab, ENDS on a static align frame.
+    3. #mirror-settle  — mirror balls roll into alignment ONCE (216f), then hand to:
+    4. #mirror-loop    — seamless 720-frame full-rotation LOOP = the live nav hub (forever).
+    5. #dest-video     — a PURPOSEFUL CLICK destination via the elevator ("Explore More" → reception;
+                         currently uses the forge clip as a stand-in until reception is rendered).
+
+    Video files are NOT committed here (GitHub Pages 100MB/file limit). Point data-src at your
+    hosted URLs (S3+CloudFront or Cloudflare R2). Encode web copies from a PNG sequence with:
+      ffmpeg -framerate 30 -start_number 0 -i frames_%03d.png -c:v libx264 -crf 23 \
+             -pix_fmt yuv420p -movflags +faststart -an out.mp4
+    (Match the %0Nd padding to your frames; +faststart is required for progressive web playback.)
+  -->
+
+  <!-- STAGE 1: ambient looping exterior -->
+  <section id="stage-loop" class="stage is-active">
+    <video id="loop-video" class="bg-video" autoplay muted loop playsinline preload="auto"
+           poster="assets/Image5_002.png" data-src="assets/intro_loop.mp4"></video>
+    <div class="overlay">
+      <h1 class="brand">FRANKENBITS</h1>
+      <p class="tagline">Perfect Storm Labs — Acoustic Detection &amp; Research</p>
+      <button id="btn-enter" class="cta" type="button">Enter the Lab</button>
+    </div>
+  </section>
+
+  <!-- STAGE 2: click-to-dive, freezes on hero still -->
+  <section id="stage-dive" class="stage">
+    <video id="dive-video" class="bg-video" muted playsinline preload="auto"
+           poster="assets/HERO2.png" data-src="assets/dive.mp4"></video>
+    <!-- LIVE nav hub (two-stage mirror-ball apparatus). When the dive ends on its static align
+         frame, the mirror balls roll into alignment ONCE (#mirror-settle, 216f), then hand off to
+         a seamless 720-frame full-rotation LOOP (#mirror-loop) that runs forever. Frame 215→216 is
+         contiguous (verified MAD≈0.06) so settle→loop is frame-perfect; 935→216 closes the loop
+         (MAD≈0.16). The settled ball positions are where the projected-nav links anchor.
+         HERO3 still is the poster/fallback if neither can play. -->
+    <video id="mirror-settle" class="bg-video" muted playsinline preload="auto"
+           poster="assets/HERO3.png" data-src="assets/mirrorballs_settle.mp4" hidden></video>
+    <video id="mirror-loop" class="bg-video" muted loop playsinline preload="auto"
+           poster="assets/HERO3.png" data-src="assets/mirrorballs_loop.mp4" hidden></video>
+    <!-- fallback still if the idle loop can't play (autoplay blocked / decode fail) -->
+    <img id="hero-still" class="bg-still" src="assets/HERO3.png" alt="" hidden />
+    <!-- WORKBENCH NAV: destinations projected onto the bench, anchored to the 5 settled mirror
+         balls. One ball per destination, mapped LEFT→RIGHT by the balls' measured frame-216 x
+         positions (NOT evenly spaced — perspective compresses the right). See
+         webdev/ball_anchoring_NOTES.md. --bx/--by are % of the frame; labels sit above each ball.
+           Ball 1  x25.0%  → About              (external)
+           Ball 2  x36.5%  → SkySentinel        (external)
+           Ball 3  x49.0%  → Explore More       (center / primary → elevator journey → reception)
+           Ball 4  x61.0%  → Investor Relations (inert placeholder)
+           Ball 5  x71.0%  → Contact            (mailto)
+         "Explore More" collapses the former Front Desk + Enter the Forge into ONE gateway: take
+         the elevator, auto-arrive at reception. Reception isn't rendered yet, so #dest-video uses
+         data-explore (currently points at the forge clip as a working stand-in; repoint to the
+         reception clip when it's rendered). Same lazy no-op pattern the README documents. -->
+    <nav id="lab-nav" class="lab-nav" hidden>
+      <!-- Projected WORDMARK — site identity cast over the beacon (the central orb/beaker), so the
+           homepage reads as "Perfect Storm Labs" without breaking the in-world illusion. Same
+           projected-light grammar as the nav links, but ignites a HEARTBEAT AFTER the nav
+           (JS adds .wordmark-lit ~700ms post-reveal) so it feels like its own entity powering on.
+           Anchored over the beacon (NOT the arch — the table sits intentionally off-center):
+           --bx:47% (beacon column, == Explore More), --by:36% (above the orb, below the gate).
+           This is the web-side stand-in for a future in-world sign (wall placard / bench book). -->
+      <div class="proj-wordmark" style="--bx:47%;--by:36%" aria-hidden="true">
+        <span class="pw-main">Perfect Storm Labs</span>
+      </div>
+      <!-- Links in LEFT→RIGHT ball order. --bx/--by = ball center as % of frame (--by is the
+           label line, just ABOVE each ball and below the orb glow). --delay ignites center-out.
+           Coords RE-MEASURED from the FINAL render (Screenshot 2026-10-03 221611): balls sit low
+           (~87% height); labels at ~81.5% clear the bright central orb so EXPLORE MORE stays legible. -->
+      <div class="projection">
+        <a   class="proj-link" href="https://paulswisher.co" target="_blank" rel="noopener"
+             style="--bx:23.1%;--by:81.5%;--delay:220ms">About</a>
+        <a   class="proj-link" href="https://skysentinel.dev" target="_blank" rel="noopener"
+             style="--bx:35.6%;--by:81.5%;--delay:110ms">SkySentinel</a>
+        <button class="proj-link" data-goto="explore" type="button"
+             style="--bx:47.5%;--by:81.5%;--delay:0ms">Explore More</button>
+        <button class="proj-link is-placeholder" type="button" disabled
+             style="--bx:58.8%;--by:81.5%;--delay:110ms">Investors</button>
+        <a   class="proj-link" href="mailto:paul@frankenbits.com"
+             style="--bx:70.2%;--by:81.5%;--delay:220ms">Contact</a>
+      </div>
+      <button class="proj-link nav-corner" data-goto="loop" type="button">↩ Back outside</button>
+    </nav>
+  </section>
+
+  <!-- STAGE 3: elevator JOURNEY — shared elevator segment fades to black, then the chosen
+       destination fades up from black on the matching doors-open keyframe. Destinations are
+       data-driven on #dest-video (data-<dest>). "Explore More" → data-explore. -->
+  <section id="stage-journey" class="stage">
+    <!-- shared: HERO/lab → into elevator → doors close → fade to black -->
+    <video id="elevator-video" class="bg-video" muted playsinline preload="auto"
+           data-src="assets/elevator.mp4"></video>
+    <!-- destination: fades from black, doors open. src set per chosen destination.
+         AUTOCHAINED CUTS: a destination's value is a COMMA-SEPARATED list of clips played back to
+         back as one film (the forge scene is re-rendered in GitHub-friendly cuts on hard scene
+         boundaries, so no seam engineering is needed — just sequential playback). Between cuts a
+         silent-film intertitle (#intertitle) covers the swap/buffer. To add a cut: append its
+         filename to the list. The cuts forge_cut_1..N collectively REPLACE the old monolithic
+         forge.mp4. (Only cut_1 is rendered so far; append cut_2.. as they land.) -->
+    <video id="dest-video" class="bg-video" playsinline preload="none" controls hidden
+           data-explore="assets/forge_cut_1.mp4"></video>
+    <!-- Silent-film intertitle: shown between autochained cuts to cover the load/swap and give the
+         sequence movie-like flair. Buffering-aware (held for a minimum beat AND until the next cut
+         is ready). CSS/text for now; drop a rendered card in later by setting a background-image on
+         .intertitle (or swapping #intertitle-text for an <img>). Hidden/inert by default. -->
+    <div id="intertitle" class="intertitle" hidden aria-hidden="true">
+      <div class="intertitle-frame">
+        <p id="intertitle-text" class="intertitle-text"></p>
+      </div>
+    </div>
+    <button class="nav-link forge-back" data-goto="dive" type="button">↩ Back to the Lab</button>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
