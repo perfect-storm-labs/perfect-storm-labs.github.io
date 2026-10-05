@@ -51,6 +51,22 @@ html, body {
   background: var(--bg);
 }
 
+/* loop video: start transparent and fade in only once it's actually painting a frame (JS adds
+   .is-shown on 'playing'/'canplay'), so the poster (Image5_002.png) holds underneath for ~1-2s
+   instead of tearing on the poster→first-decoded-frame swap. Same anti-flash grammar as the
+   mirror-ball handoffs below. */
+#loop-video {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+#loop-video.is-shown { opacity: 1; }
+/* poster still under the loop: visible on load, fades out once the video is painting */
+#loop-poster {
+  z-index: 0;
+  transition: opacity 0.6s ease;
+}
+#loop-poster.is-hidden { opacity: 0; }
+
 /* dive → settle → loop handoffs: each incoming mirror-ball clip starts transparent and fades in
    over the previous clip's last frame once it's actually painting (JS adds .is-shown on the
    'playing' event). This bridges decode latency so there's no flash/blip between clips.

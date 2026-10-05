@@ -358,6 +358,23 @@ document.querySelectorAll("[data-goto]").forEach((btn) => {
 /* ── startup: wire the always-on loop video + report any remaining placeholders ───── */
 window.addEventListener("DOMContentLoaded", () => {
   // the loop is on the active first stage → load + play it now (muted autoplay).
+  // ANTI-TEAR: keep the poster (Image5_002.png) visible and only fade the VIDEO in once it's
+  // actually painting a frame (not just on play()). This hides the poster→first-decoded-frame
+  // swap that was tearing on first load; the poster simply holds for the ~1-2s until the clip is
+  // ready. 'playing' is the real "painting" signal; 'canplay' + a short timer are fallbacks so the
+  // loop never gets stranded transparent if 'playing' doesn't fire (cached/fast-start cases).
+  const showLoopVideo = () => {
+    loopVideo.classList.add("is-shown");
+    const poster = document.getElementById("loop-poster");
+    if (poster) poster.classList.add("is-hidden");   // fade the held poster out from underneath
+    loopVideo.removeEventListener("playing", showLoopVideo);
+    loopVideo.removeEventListener("canplay", showLoopVideo);
+    clearTimeout(loopRevealFallback);
+  };
+  const loopRevealFallback = setTimeout(showLoopVideo, 2000);  // never hold the poster > ~2s
+  loopVideo.addEventListener("playing", showLoopVideo);
+  loopVideo.addEventListener("canplay", showLoopVideo);
+
   if (ensureLoaded(loopVideo)) {
     const p = loopVideo.play();
     if (p) p.catch(() => {});   // poster (hero still) remains if autoplay is blocked

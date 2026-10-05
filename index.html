@@ -27,6 +27,11 @@
 
   <!-- STAGE 1: ambient looping exterior -->
   <section id="stage-loop" class="stage is-active">
+    <!-- Poster still held UNDER the loop video so there's always a painted frame on first load.
+         The loop <video> starts transparent (opacity:0) and only fades in once it's actually
+         painting (JS adds .is-shown on 'playing'); this still shows through until then, so the
+         poster→first-frame swap no longer tears. Fades out (.is-hidden) once the video is up. -->
+    <img id="loop-poster" class="bg-still" src="assets/Image5_002.png" alt="" aria-hidden="true" />
     <video id="loop-video" class="bg-video" autoplay muted loop playsinline preload="auto"
            poster="assets/Image5_002.png" data-src="assets/intro_loop.mp4"></video>
     <div class="overlay">
