@@ -15,6 +15,8 @@ assets/hero3_intro.mp4    # not referenced by the page
 serve.py
 make_web.sh
 check.sh
+encode_render.sh      # PNG sequence → web-ready mp4 (dev render pipeline)
+promote_to_live.sh    # dev → this Pages repo promotion (the only script that writes here)
 __pycache__/
 *.pyc
 webdev/
