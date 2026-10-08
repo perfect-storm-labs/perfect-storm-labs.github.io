@@ -27,6 +27,108 @@ const mirrorLoop    = document.getElementById("mirror-loop");
 const labNav        = document.getElementById("lab-nav");
 const wordmark      = document.querySelector(".proj-wordmark");
 
+/* ── TITLE SEQUENCE (movie intro) ───────────────────────────────
+   Staged credit cards shown over the loop on EVERY arrival at the loop stage (fresh load AND
+   "Back outside" return). Cards fade in/out one at a time, then the Enter button fades in.
+   The Enter button carries .is-pending (invisible, non-interactive) until the sequence finishes.
+   TODO(skip): add a click/keydown listener on #stage-loop that calls skipTitleSequence() to jump
+   straight to the final card + reveal Enter (design asked for click-to-skip eventually). */
+const btnEnter      = document.getElementById("btn-enter");
+const titleCards    = Array.from(document.querySelectorAll(".title-card"));
+
+/* Per-card hold times (ms) each card stays fully up before fading to the next. Cards 1–4 hold 5s
+   each per the brief; the FINAL card (5) persists (its hold is unused — it never fades) and Enter
+   is revealed ENTER_AFTER_FINAL ms after it appears. Fade is 0.8s (CSS). */
+const TITLE_HOLDS = [5000, 5000, 5000, 5000, 0];
+const TITLE_FADE  = 800;   // keep in sync with .title-card transition in styles.css
+const ENTER_AFTER_FINAL = 3000;  // reveal Enter 3s after the final card appears
+
+let titleTimers = [];      // outstanding timeouts so a re-run (re-entry) can cancel a prior run
+let titleRunToken = 0;     // invalidates an in-flight sequence if the stage changes mid-run
+
+function clearTitleTimers() {
+  titleTimers.forEach(clearTimeout);
+  titleTimers = [];
+}
+
+/* Reset all cards + the Enter button to the pre-sequence state (nothing shown, button pending). */
+function resetTitleSequence() {
+  clearTitleTimers();
+  titleRunToken++;                         // cancel any in-flight run
+  titleCards.forEach((c) => {
+    c.classList.remove("is-shown");
+    c.setAttribute("aria-hidden", "true");
+  });
+  if (btnEnter) btnEnter.classList.add("is-pending");
+}
+
+/* Reveal the Enter button (end of sequence, or on skip). */
+function revealEnter() {
+  if (btnEnter) btnEnter.classList.remove("is-pending");
+}
+
+/* Play the staged title cards, then reveal Enter. Idempotent per-call via a run token so a
+   re-entry restarts cleanly without two sequences overlapping. */
+function runTitleSequence() {
+  resetTitleSequence();
+  const token = ++titleRunToken;
+  const reduceMotion = window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Reduced motion → skip the staged animation: show the FINAL identity card + Enter immediately.
+  if (reduceMotion) {
+    const finalCard = titleCards[titleCards.length - 1];
+    if (finalCard) { finalCard.classList.add("is-shown"); finalCard.setAttribute("aria-hidden", "false"); }
+    revealEnter();
+    return;
+  }
+
+  // Each card: fade IN at t, hold, fade OUT at t+hold; the NEXT card starts only after this one
+  // has fully faded out (t + hold + TITLE_FADE) — a clean dissolve, one title at a time, no
+  // overlap. The LAST card fades in and PERSISTS (never fades); Enter reveals ENTER_AFTER_FINAL
+  // after it appears.
+  let t = 0;
+  titleCards.forEach((card, i) => {
+    const hold = TITLE_HOLDS[i] ?? 5000;
+    const isLast = i === titleCards.length - 1;
+    // fade this card IN at time t
+    titleTimers.push(setTimeout(() => {
+      if (token !== titleRunToken) return;              // superseded → bail
+      card.classList.add("is-shown");
+      card.setAttribute("aria-hidden", "false");
+    }, t));
+    if (isLast) {
+      // final card stays up; reveal Enter a few seconds after it appears
+      titleTimers.push(setTimeout(() => {
+        if (token !== titleRunToken) return;
+        revealEnter();
+      }, t + ENTER_AFTER_FINAL));
+      return;
+    }
+    // non-final: fade OUT after its hold
+    titleTimers.push(setTimeout(() => {
+      if (token !== titleRunToken) return;
+      card.classList.remove("is-shown");
+      card.setAttribute("aria-hidden", "true");
+    }, t + hold));
+    // next card starts after this one has fully faded out (no overlap)
+    t += hold + TITLE_FADE;
+  });
+}
+
+/* skipTitleSequence(): fast-forward to the end — show the final card, reveal Enter. Wired to a
+   future click/keydown on the loop stage (TODO above). Exposed now so the hook is trivial to add. */
+function skipTitleSequence() {
+  clearTitleTimers();
+  titleRunToken++;
+  titleCards.forEach((c, i) => {
+    const show = i === titleCards.length - 1;
+    c.classList.toggle("is-shown", show);
+    c.setAttribute("aria-hidden", show ? "false" : "true");
+  });
+  revealEnter();
+}
+
 /** Attach real src from data-src the first time a video is needed.
  *  Returns true if a REAL (non-placeholder) src is present, false otherwise. */
 function ensureLoaded(video) {
@@ -67,6 +169,17 @@ function resetHub() {
 
 /* ── Stage 1 → 2 : "Enter the Lab" ─────────────────────────── */
 document.getElementById("btn-enter").addEventListener("click", () => {
+  // "Enter the Lab" card (enter_lab.jpg — "Entering the Lab…") covers the stage switch + dive
+  // load. The dive plays UNDER the card and is revealed as the card lifts (buffering-aware: min
+  // beat AND dive ready, whichever is longer).
+  let diveReady = null;
+  showCard(CARD.enterLab, {
+    minMs: 1500,
+    waitFor: (signalReady) => { diveReady = signalReady; },
+  });
+
+  resetTitleSequence();           // cancel any in-flight title cards (defensive; sequence is done)
+
   showStage("dive");
   heroStill.hidden = true;
   labNav.hidden = true;
@@ -74,10 +187,16 @@ document.getElementById("btn-enter").addEventListener("click", () => {
   const hasVideo = ensureLoaded(diveVideo);
   if (!hasVideo) {
     // no dive clip yet (placeholder) → go straight to the hero still, no racing a failed play()
+    if (diveReady) diveReady();
     revealHero();
     return;
   }
   // real dive clip present → play it; on 'ended' it hands off to the mirror-ball apparatus.
+  // lift the TO LAB card once the dive is actually painting (or quickly, via canplay fallback).
+  const liftOnDive = () => { if (diveReady) diveReady(); };
+  diveVideo.addEventListener("playing", liftOnDive, { once: true });
+  diveVideo.addEventListener("canplay", liftOnDive, { once: true });
+  setTimeout(liftOnDive, 2500);  // hard fallback so the card never sticks
   diveVideo.currentTime = 0;
   const p = diveVideo.play();
   if (p) p.catch(revealHero);   // autoplay blocked → fall back to the hero still, don't strand
@@ -124,14 +243,102 @@ elevatorVideo.addEventListener("ended", playDestination);
    BUFFERING-AWARE: held for a minimum beat AND until the next cut can play through, whichever is
    longer — so fast loads still get the stylistic beat and slow loads never look like a stall.
    To add a cut: append its filename to the list. forge_cut_1..N collectively replace forge.mp4. */
-const intertitle     = document.getElementById("intertitle");
-const intertitleText = document.getElementById("intertitle-text");
+const intertitle      = document.getElementById("intertitle");
+const intertitleText  = document.getElementById("intertitle-text");
+const intertitleFrame = document.getElementById("intertitle-frame");
 
 const CARD_MIN_MS = 1600;   // minimum time a card stays up (the stylistic beat)
-/* Optional per-gap captions (silent-film intertitles). Index i = card shown BEFORE cut i+1.
-   Leave an entry empty ("") for a plain hold with no text. Add/edit freely as cuts are rendered. */
+
+/* Rendered silent-film title cards (sliced from the reference art; swap for clean PNGs anytime —
+   same filenames). Shown at key transitions via showCard(). card_standby exists for a future
+   "STANDBY, joining live stream" beat (not wired yet). */
+const CARD = {
+  pleaseWait: "assets/card_please_wait.png",   // initial load
+  enterLab:   "assets/enter_lab.jpg",          // "Enter the Lab" click (recreated card: "Entering the Lab…")
+  toLab:      "assets/card_to_lab.png",         // (old) superseded by enter_lab.jpg
+  intoDepths: "assets/card_into_depths.png",   // "Explore More" click
+  standby:    "assets/card_standby.png",       // (future) joining live stream
+};
+
+/* showCard(src, {minMs, onDone, waitFor, text}) — fade a card up over everything, hold it, fade
+   out. If `text` is given (and no `src`), show a styled silent-film TEXT card instead of a PNG
+   (used for "Enter the Lab" while the rendered cards are being reworked). If onDone is given it
+   fires after the fade-out (so you can start the next thing UNDER the card and reveal it as the
+   card lifts). Buffering-aware via waitFor (hold until BOTH minMs elapsed AND a readiness signal). */
+let cardAdvanced = false;
+
+/* Shared card-image helpers (used by both showCard and the between-cuts showIntertitle).
+   setCardImage: put the frame into image mode, show `src`, and size the frame to the image's own
+   aspect ratio (cards differ: 648×330 vs 1408×768) so nothing letterboxes/crops. */
+function setCardImage(src) {
+  intertitleText.textContent = "";
+  intertitle.classList.add("has-card");
+  intertitle.classList.remove("no-text");
+  if (!intertitleFrame) return;
+  intertitleFrame.style.backgroundImage = `url("${src}")`;
+  const probe = new Image();
+  probe.onload = () => {
+    if (probe.naturalWidth && probe.naturalHeight) {
+      intertitleFrame.style.setProperty("--card-ar", `${probe.naturalWidth} / ${probe.naturalHeight}`);
+    }
+  };
+  probe.src = src;
+}
+function clearCardImage() {
+  intertitle.classList.remove("has-card");
+  if (intertitleFrame) {
+    intertitleFrame.style.backgroundImage = "";
+    intertitleFrame.style.removeProperty("--card-ar");
+  }
+}
+
+function showCard(src, opts = {}) {
+  const minMs = opts.minMs ?? CARD_MIN_MS;
+  const asText = !src && !!opts.text;
+  if (asText) {
+    // TEXT MODE: styled intertitle text, no PNG. Drop image-card chrome.
+    clearCardImage();
+    intertitle.classList.remove("no-text");
+    intertitleText.textContent = opts.text;
+  } else {
+    setCardImage(src);
+  }
+  intertitle.hidden = false;
+  void intertitle.offsetWidth;              // reflow so the fade runs
+  intertitle.classList.add("is-shown");
+
+  cardAdvanced = false;
+  let beatDone = false;
+  let ready = !opts.waitFor;                 // if no readiness gate, we're ready immediately
+  const tryLift = () => {
+    if (cardAdvanced || !beatDone || !ready) return;
+    cardAdvanced = true;
+    hideCard(opts.onDone);
+  };
+  setTimeout(() => { beatDone = true; tryLift(); }, minMs);
+  if (opts.waitFor) {
+    opts.waitFor(() => { ready = true; tryLift(); });  // caller signals readiness
+  }
+}
+
+function hideCard(done) {
+  intertitle.classList.remove("is-shown");
+  setTimeout(() => {
+    intertitle.hidden = true;
+    clearCardImage();                     // drop has-card + background-image + --card-ar
+    if (done) done();
+  }, 450);
+}
+
+/* Per-gap intertitles (shown BETWEEN autochained forge cuts). Index i = card shown BEFORE cut i+1.
+   Each entry is either:
+     • "" (empty)              → clean black hold, no card
+     • "some text"             → styled silent-film TEXT card
+     • { img: "assets/x.jpg" } → rendered image card (ornate silent-film art)
+   Add/edit freely as cuts are rendered. */
 const FORGE_CARDS = [
-  "Into the forge\u2026",
+  "",                                       // before cut 2 (clean black hold)
+  { img: "assets/back_to_forge.jpg" },      // before cut 3 — "Back to the Forge.." rendered card
 ];
 
 let destCuts = [];          // the parsed list of clip srcs for the active destination
@@ -173,9 +380,16 @@ destVideo.addEventListener("ended", () => {
 /* Show the silent-film card, preload the next cut underneath, then play it once BOTH the minimum
    beat has elapsed AND the next cut can play through (whichever is longer). */
 function showIntertitle(nextIndex) {
-  const caption = FORGE_CARDS[nextIndex - 1] || "";
-  intertitleText.textContent = caption;
-  intertitle.classList.toggle("no-text", !caption);
+  const entry = FORGE_CARDS[nextIndex - 1];
+  const isImg = entry && typeof entry === "object" && entry.img;
+  const caption = typeof entry === "string" ? entry : "";
+  if (isImg) {
+    setCardImage(entry.img);                 // rendered art card ("Back to the Forge..")
+  } else {
+    clearCardImage();                        // text or empty hold
+    intertitleText.textContent = caption;
+    intertitle.classList.toggle("no-text", !caption);
+  }
   intertitle.hidden = false;
   // force reflow so the opacity transition runs even though we just unhid it
   void intertitle.offsetWidth;
@@ -194,7 +408,23 @@ function showIntertitle(nextIndex) {
     advanced = true;
     clearTimeout(readyCap);
     destVideo.removeEventListener("canplaythrough", onReady);
-    hideIntertitle(() => playCut(nextIndex));
+    // Anti-flash handoff: the next cut is already loaded + decoded BEHIND the opaque card.
+    // Start it playing WHILE the card still fully covers it, then only fade the card out once
+    // the video is actually painting frames ('playing'). This prevents the brief reveal of the
+    // next cut's static first frame during the fade (the "cut3 image → card → cut3 video" hitch).
+    destIndex = nextIndex;
+    const reveal = () => {
+      destVideo.removeEventListener("playing", reveal);
+      clearTimeout(revealCap);
+      hideIntertitle();                 // fade the card off the already-moving video
+    };
+    let revealCap = null;
+    destVideo.addEventListener("playing", reveal);
+    // safety: if 'playing' never fires, lift the card anyway so we never strand on the card
+    revealCap = setTimeout(reveal, 1200);
+    destVideo.currentTime = 0;
+    const p = destVideo.play();
+    if (p) p.catch(() => { reveal(); }); // autoplay blocked → lift card, controls shown
   };
   const onReady = () => { ready = true; tryAdvance(); };
   destVideo.addEventListener("canplaythrough", onReady);
@@ -208,6 +438,7 @@ function hideIntertitle(done) {
   // wait out the fade before hiding + running the callback (keeps the card over the swap)
   setTimeout(() => {
     intertitle.hidden = true;
+    clearCardImage();                     // drop has-card + background-image + --card-ar
     intertitleText.textContent = "";
     if (done) done();
   }, 450);
@@ -338,10 +569,22 @@ document.querySelectorAll("[data-goto]").forEach((btn) => {
     const dest = btn.dataset.goto;
     if (dest === "explore") {
       pauseHub();                       // leaving the lab → stop the hub
+      // INTO THE DEPTHS card covers the hand-off into the elevator journey. The journey starts
+      // UNDER the card; lift when the elevator clip is painting (or a timed fallback).
+      let journeyReady = null;
+      showCard(CARD.intoDepths, {
+        minMs: 1600,
+        waitFor: (signalReady) => { journeyReady = signalReady; },
+      });
+      const liftOnElevator = () => { if (journeyReady) journeyReady(); };
+      elevatorVideo.addEventListener("playing", liftOnElevator, { once: true });
+      elevatorVideo.addEventListener("canplay", liftOnElevator, { once: true });
+      setTimeout(liftOnElevator, 2500); // hard fallback so the card never sticks
       startJourney("explore");          // take the elevator → reception (forge clip stand-in for now)
     } else if (dest === "loop") {
       pauseHub();                       // leaving the lab → stop the hub
       showStage("loop");
+      runTitleSequence();               // movie-intro: replay the title cards on every return
     } else if (dest === "dive") {
       // back to the lab = the live mirror-ball hub (don't re-run the dive or elevator).
       // Resume directly at the LOOP (skip replaying the one-time settle on return). Balls are
@@ -363,6 +606,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // swap that was tearing on first load; the poster simply holds for the ~1-2s until the clip is
   // ready. 'playing' is the real "painting" signal; 'canplay' + a short timer are fallbacks so the
   // loop never gets stranded transparent if 'playing' doesn't fire (cached/fast-start cases).
+  // INITIAL-LOAD CARD state (declared before showLoopVideo, which signals it): the PLEASE WAIT
+  // card lifts when loopReady() is called (loop ready) AND its minimum beat has elapsed.
+  let loopReady = null;
   const showLoopVideo = () => {
     loopVideo.classList.add("is-shown");
     const poster = document.getElementById("loop-poster");
@@ -370,10 +616,22 @@ window.addEventListener("DOMContentLoaded", () => {
     loopVideo.removeEventListener("playing", showLoopVideo);
     loopVideo.removeEventListener("canplay", showLoopVideo);
     clearTimeout(loopRevealFallback);
+    if (loopReady) loopReady();                      // signal the PLEASE WAIT card it can lift
   };
   const loopRevealFallback = setTimeout(showLoopVideo, 2000);  // never hold the poster > ~2s
   loopVideo.addEventListener("playing", showLoopVideo);
   loopVideo.addEventListener("canplay", showLoopVideo);
+
+  // INITIAL-LOAD CARD: "PLEASE WAIT — the projector is preparing the feature." Held over the
+  // opening (silent-film style) until the loop is actually ready to paint, then lifts to reveal
+  // the live loop. Buffering-aware: minimum beat AND loop-ready (whichever is longer). The poster
+  // sits under it; if the card's own art fails to load the poster still shows, so nothing strands.
+  // When it lifts, the TITLE SEQUENCE begins (movie intro) over the now-playing loop.
+  showCard(CARD.pleaseWait, {
+    minMs: 1800,
+    waitFor: (signalReady) => { loopReady = signalReady; },
+    onDone: runTitleSequence,
+  });
 
   if (ensureLoaded(loopVideo)) {
     const p = loopVideo.play();

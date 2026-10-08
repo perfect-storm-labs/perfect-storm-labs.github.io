@@ -34,10 +34,46 @@
     <img id="loop-poster" class="bg-still" src="assets/Image5_002.png" alt="" aria-hidden="true" />
     <video id="loop-video" class="bg-video" autoplay muted loop playsinline preload="auto"
            poster="assets/Image5_002.png" data-src="assets/intro_loop.mp4"></video>
-    <div class="overlay">
+    <!-- TITLE SEQUENCE (movie-intro grammar) — plays on EVERY arrival at the loop stage (fresh
+         load AND "Back outside" return). JS (runTitleSequence) fades these cards in/out in order,
+         then fades in the Enter button. Each .title-card starts hidden (opacity:0) and is driven
+         by .is-shown. The brand wordmark persists under all cards as the constant anchor.
+         TODO(skip): wire a click/keydown on #stage-loop to fast-forward the sequence (jump to the
+         final card + reveal Enter). Left as a follow-up per design note. -->
+    <div class="overlay" id="title-overlay">
       <h1 class="brand">FRANKENBITS</h1>
-      <p class="tagline">Perfect Storm Labs — Acoustic Detection &amp; Research</p>
-      <button id="btn-enter" class="cta" type="button">Enter the Lab</button>
+
+      <!-- TITLE BAND: fixed-height stage so cycling cards never change the overlay height
+           (that height change was bouncing the brand above). All cards stack in this band. -->
+      <div class="title-band">
+        <!-- Card 1: studio bumper -->
+        <div class="title-card" data-title-card="1" aria-hidden="true">
+          <p class="title-lab">FrankenBits, LLC presents</p>
+        </div>
+
+        <!-- Card 2: the identity -->
+        <div class="title-card" data-title-card="2" aria-hidden="true">
+          <p class="title-lab">Perfect Storm Labs</p>
+        </div>
+
+        <!-- Card 3: the discipline -->
+        <div class="title-card" data-title-card="3" aria-hidden="true">
+          <p class="title-sub">Acoustic Detection &amp; Research</p>
+          <p class="title-sub title-sub-b2b">Engineering Business-to-Business Engagement</p>
+        </div>
+
+        <!-- Card 4: production credit -->
+        <div class="title-card" data-title-card="4" aria-hidden="true">
+          <p class="title-credit">Produced in Twinmotion</p>
+        </div>
+
+        <!-- Card 5: final identity (persists; Enter reveals under it) -->
+        <div class="title-card" data-title-card="5" aria-hidden="true">
+          <p class="title-lab">Perfect Storm Labs</p>
+        </div>
+      </div>
+
+      <button id="btn-enter" class="cta is-pending" type="button">Enter the Lab</button>
     </div>
   </section>
 
@@ -116,18 +152,25 @@
          filename to the list. The cuts forge_cut_1..N collectively REPLACE the old monolithic
          forge.mp4. (Only cut_1 is rendered so far; append cut_2.. as they land.) -->
     <video id="dest-video" class="bg-video" playsinline preload="none" controls hidden
-           data-explore="assets/forge_cut_1.mp4"></video>
-    <!-- Silent-film intertitle: shown between autochained cuts to cover the load/swap and give the
-         sequence movie-like flair. Buffering-aware (held for a minimum beat AND until the next cut
-         is ready). CSS/text for now; drop a rendered card in later by setting a background-image on
-         .intertitle (or swapping #intertitle-text for an <img>). Hidden/inert by default. -->
-    <div id="intertitle" class="intertitle" hidden aria-hidden="true">
-      <div class="intertitle-frame">
-        <p id="intertitle-text" class="intertitle-text"></p>
-      </div>
-    </div>
+           data-explore="assets/forge_cut_1.mp4,assets/forge_cut_2.mp4,assets/forge_cut_3.mp4"></video>
     <button class="nav-link forge-back" data-goto="dive" type="button">↩ Back to the Lab</button>
   </section>
+
+  <!-- SILENT-FILM INTERTITLE (top-level overlay so it can cover ANY stage) ─────────────────────
+       Shows a rendered title card at key transitions, silent-film style. Used for:
+         • initial load            → PLEASE WAIT   (card_please_wait.png)
+         • "Enter the Lab" click    → TO LAB        (card_to_lab.png)
+         • "Explore More" click     → INTO THE DEPTHS (card_into_depths.png)
+         • between forge cuts       → (buffering-aware caption/card to cover the swap)
+       The card image is set as a background-image on .intertitle-frame via JS (showCard). Falls
+       back to #intertitle-text if no image. Buffering-aware where it gates a video (held for a
+       minimum beat AND until the target is ready). Hidden/inert by default.
+       (card_standby.png exists for a future "STANDBY, joining live stream" beat — not wired yet.) -->
+  <div id="intertitle" class="intertitle" hidden aria-hidden="true">
+    <div class="intertitle-frame" id="intertitle-frame">
+      <p id="intertitle-text" class="intertitle-text"></p>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
