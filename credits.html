@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credits &amp; Attributions — FrankenBits · Perfect Storm Labs</title>
+  <meta name="description" content="Credits and asset attributions for the FrankenBits / Perfect Storm Labs world." />
+  <!--
+    STANDALONE attribution page (NOT a video stage — a real scrollable page, so overflow is allowed
+    unlike index.html). Reached from the shield payoff's "Credits" projected-nav link. This page is
+    the DURABLE CC-Attribution compliance surface: the 16 third-party assets below are used under
+    CC Attribution and are credited here with name, author, license, and the date obtained.
+    Each asset also shows an in-world render of the piece. Metadata source: archieve/credits.md.
+  -->
+  <style>
+    :root {
+      --bg: #05060a;
+      --fg: #e8ecf2;
+      --accent: #cfe3ff;      /* cool lightning-white */
+      --cyan: #d6f3ff;        /* projected-light cyan core */
+      --dim: #8a93a6;
+      --line: rgba(207, 227, 255, 0.14);
+      --card: rgba(207, 227, 255, 0.03);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      /* a faint central glow, echoing the shield's blue backlight */
+      background-image: radial-gradient(ellipse at 50% -10%, rgba(40, 110, 220, 0.18) 0%, transparent 55%);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding: clamp(2rem, 6vw, 5rem) clamp(1rem, 5vw, 4rem) 5rem;
+    }
+
+    /* ── header ─────────────────────────────────────────── */
+    header { text-align: center; margin-bottom: clamp(2.5rem, 7vw, 5rem); }
+    .wordmark {
+      font-size: clamp(1.4rem, 4vw, 2.6rem);
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      padding-left: 0.3em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      /* same dark-edge-then-bloom grammar as the in-world projected wordmark */
+      text-shadow:
+        0 1px 2px rgba(0, 10, 20, 0.95),
+        0 0 5px  rgba(190, 240, 255, 0.9),
+        0 0 18px rgba(90, 210, 255, 0.7),
+        0 0 42px rgba(60, 170, 255, 0.4);
+    }
+    .page-title {
+      margin-top: 1rem;
+      font-size: clamp(0.85rem, 2vw, 1.1rem);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .lede {
+      max-width: 46rem;
+      margin: 1.4rem auto 0;
+      color: var(--dim);
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+
+    /* ── section headings ───────────────────────────────── */
+    .section { max-width: 72rem; margin: 0 auto clamp(2.5rem, 6vw, 4.5rem); }
+    .section-h {
+      font-size: clamp(1rem, 2.4vw, 1.4rem);
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding-bottom: 0.7rem;
+      margin-bottom: 1.8rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    /* ── asset grid (the 16 CC-Attribution assets) ─────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: clamp(1rem, 2.5vw, 1.8rem);
+    }
+    .asset {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.25s ease, transform 0.15s ease;
+    }
+    .asset:hover {
+      border-color: rgba(120, 210, 255, 0.5);
+      transform: translateY(-2px);
+    }
+    .asset .thumb {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #04050a;
+      display: grid;
+      place-items: center;
+    }
+    .asset .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;      /* assets vary in aspect; never crop */
+      display: block;
+    }
+    .asset .meta { padding: 0.85rem 1rem 1.1rem; border-top: 1px solid var(--line); }
+    .asset .name {
+      font-size: 0.95rem;
+      color: var(--fg);
+      margin-bottom: 0.3rem;
+    }
+    .asset .author { font-size: 0.85rem; color: var(--cyan); }
+    .asset .lic {
+      font-size: 0.72rem;
+      color: var(--dim);
+      letter-spacing: 0.06em;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    /* ── plain credit lists (Main / third-party / producer) ── */
+    .credit-list { list-style: none; display: grid; gap: 0.55rem; max-width: 46rem; }
+    .credit-list li { color: var(--fg); font-size: 0.95rem; }
+    .credit-list li .sub { color: var(--dim); font-size: 0.85rem; }
+    .producer {
+      max-width: 46rem;
+      margin: 0 auto;
+      text-align: center;
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
+      color: var(--accent);
+      font-size: clamp(1rem, 2.2vw, 1.25rem);
+      letter-spacing: 0.04em;
+      padding-top: 1rem;
+    }
+
+    /* ── back link (projected-light grammar) ───────────────── */
+    .back {
+      display: inline-block;
+      margin: 0 auto;
+      padding: 0.7rem 1.8rem;
+      color: var(--cyan);
+      text-decoration: none;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+    .back:hover { background: rgba(207, 227, 255, 0.08); border-color: rgba(120, 210, 255, 0.5); }
+    .back-wrap { text-align: center; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wordmark">Perfect Storm Labs</div>
+    <p class="page-title">Credits &amp; Attributions</p>
+    <p class="lede">
+      The FrankenBits world is built on original work plus community assets shared under
+      Creative Commons Attribution. Each contributor is credited below with the piece as it
+      appears in-world. Thank you to every creator.
+    </p>
+  </header>
+
+  <!-- ── CC-ATTRIBUTION ASSETS (the 16 — license compliance) ───────────────── -->
+  <section class="section">
+    <h2 class="section-h">Community Assets · CC Attribution</h2>
+    <div class="grid">
+      <!-- item N ⇄ assets/credits/N.png (1:1 with archieve/credits.md) -->
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/1.png" alt="Sci-fi Energy Conduit System" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Sci-fi Energy Conduit System</div>
+          <div class="author">Inditiron Dradnon</div>
+          <div class="lic">CC Attribution · Sept 11 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/2.png" alt="Electrical Breaker Panel Box - LP model" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Electrical Breaker Panel Box — LP model</div>
+          <div class="author">Nikoleta Zhecheva</div>
+          <div class="lic">CC Attribution · Sept 11 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/3.png" alt="Shovel" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">CC0 — Shovel</div>
+          <div class="author">plaggy</div>
+          <div class="lic">CC Attribution · Sept 17 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/4.png" alt="Rooftop Utility Pole" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Rooftop Utility Pole</div>
+          <div class="author">TomasKiniulis</div>
+          <div class="lic">CC Attribution · Sept 11 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/5.png" alt="Vintage Industrial ladder" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Vintage Industrial Ladder</div>
+          <div class="author">Samuel F. Angrick — Johanns (Oneironauticus)</div>
+          <div class="lic">CC Attribution · Sept 11 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/6.png" alt="Weather Station" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Weather Station</div>
+          <div class="author">TrentPierce</div>
+          <div class="lic">CC Attribution · Sept 16 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/7.png" alt="Modular Pipes" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Modular Pipes</div>
+          <div class="author">Lashley</div>
+          <div class="lic">CC Attribution · Sept 18 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/8.png" alt="Funnel - Embudo" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Funnel — Embudo</div>
+          <div class="author">blanco.ger</div>
+          <div class="lic">CC Attribution · Sept 15 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/9.png" alt="Black Honey - Robotic Arm" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Black Honey — Robotic Arm</div>
+          <div class="author">Re1monsen</div>
+          <div class="lic">CC Attribution · Sept 15 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/10.png" alt="2 door grate" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">2_door_grate</div>
+          <div class="author">Ledeyer</div>
+          <div class="lic">CC Attribution · Sept 10 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/11.png" alt="Beaker" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Beaker</div>
+          <div class="author">Phillip Stephens</div>
+          <div class="lic">CC Attribution · Sept 10 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/12.png" alt="Unseen: Candelabra 04" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Unseen: Candelabra 04</div>
+          <div class="author">JmCVoyager</div>
+          <div class="lic">CC Attribution · Sept 10 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/13.png" alt="Wires" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Wires</div>
+          <div class="author">Bulat.Shakirov</div>
+          <div class="lic">CC Attribution · Sept 11 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/14.png" alt="Leather Chair, Coffee table, Floorlamp" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Leather Chair / Coffee Table / Floorlamp</div>
+          <div class="author">YJ_</div>
+          <div class="lic">CC Attribution · Sept 16 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/15.png" alt="Iconic Half-Life red valve" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">Iconic Half-Life Red Valve</div>
+          <div class="author">DeepDown</div>
+          <div class="lic">CC Attribution · Sept 18 2026</div>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="thumb"><img src="assets/credits/16.png" alt="3 Pack of Storm Lightning" loading="lazy" /></div>
+        <figcaption class="meta">
+          <div class="name">3 Pack of Storm Lightning</div>
+          <div class="author">Incg5764</div>
+          <div class="lic">CC Attribution · Sept 17 2026</div>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ── MAIN TOOLS / ENGINES ──────────────────────────────────────────────── -->
+  <section class="section">
+    <h2 class="section-h">Built With</h2>
+    <ul class="credit-list">
+      <li>Twinmotion 2026.1 HF2 · 2026.2.0 Preview (57279582)
+          <span class="sub">— Copyright 1998–2026 Epic Games, Inc. All rights reserved.</span></li>
+      <li>Unreal Engine</li>
+      <li>Blender</li>
+      <li>Google Gemini · OpenAI ChatGPT</li>
+      <li>Amazon's Kiro</li>
+    </ul>
+  </section>
+
+  <!-- ── THIRD-PARTY (to Twinmotion) ───────────────────────────────────────── -->
+  <section class="section">
+    <h2 class="section-h">Third-Party Components</h2>
+    <p class="lede" style="margin:0 0 1rem;">Bundled with Twinmotion:</p>
+    <ul class="credit-list">
+      <li>Libzip</li>
+      <li>OpenStreetMap</li>
+      <li>Poly2Tri</li>
+      <li>Win32++</li>
+      <li>3Dconnexion</li>
+      <li>Adobe Substance 3D</li>
+    </ul>
+  </section>
+
+  <!-- ── PRODUCER ──────────────────────────────────────────────────────────── -->
+  <section class="section">
+    <p class="producer">Produced by Paul Swisher · FrankenBits, LLC · all rights reserved.</p>
+  </section>
+
+  <div class="back-wrap">
+    <a class="back" href="index.html">↩ Back to the top</a>
+  </div>
+</body>
+</html>

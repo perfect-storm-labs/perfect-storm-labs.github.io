@@ -492,3 +492,96 @@ html, body {
   .intertitle { transition: none; }
   .intertitle::after { animation: none; }
 }
+
+/* ── SHIELD PAYOFF (end of the forge journey = the second hub) ───────────────
+   The shield loop is a slow non-rotating beaker energy-pulse that takes over when forge_cut_3
+   ends on the shield frame. Anti-flash: start transparent, fade in once painting (JS adds
+   .is-shown) over cut_3's held last frame — same grammar as the mirror settle→loop handoff.
+   Sits above #dest-video so the crossfade reads cleanly. */
+#shield-loop {
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  z-index: 2;                 /* above #dest-video (the held cut_3 last frame) */
+}
+#shield-loop.is-shown { opacity: 1; }
+
+/* CREDITS ROLL — a slow upward scroll over the live shield, silent-film grammar (bookends the
+   opening title sequence). Full-bleed layer; the scroll column starts below the frame and rises
+   out the top. Fades in via .is-shown; the scroll runs via .is-rolling. The roll stays in the
+   UPPER/MID band so it clears the LED nav band (~y71%) where the links ignite afterward. */
+.shield-credits {
+  position: absolute;
+  inset: 0;
+  z-index: 4;                 /* above the shield loop, below nothing it needs to block */
+  overflow: hidden;
+  pointer-events: none;       /* never traps clicks over the loop */
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  /* mask so text softly appears/vanishes at the top & bottom edges (projector feel) */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 70%, transparent 86%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 70%, transparent 86%);
+}
+.shield-credits.is-shown { opacity: 1; }
+
+.credits-scroll {
+  position: absolute;
+  left: 50%;
+  top: 100%;                  /* starts just below the viewport, scrolls up into view */
+  transform: translateX(-50%);
+  width: min(90vw, 40rem);
+  text-align: center;
+  /* keep the roll in the upper/mid region: it rises from bottom and exits top, passing through
+     the clear zone above the beaker, not lingering on the LED band. */
+}
+.shield-credits.is-rolling .credits-scroll {
+  animation: creditsRoll 22s linear forwards;   /* keep duration == CREDITS_ROLL_MS in app.js */
+}
+
+/* silent-film credit typography (echoes .title-* + .intertitle-text) */
+.credits-scroll p { margin: 0.55rem 0; line-height: 1.4; text-shadow: 0 2px 18px rgba(0,0,0,0.85); }
+.cr-head {
+  font-size: clamp(1.4rem, 3.5vw, 2.4rem);
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  padding-left: 0.22em;
+  color: var(--accent);
+  text-shadow: 0 0 24px rgba(120, 200, 255, 0.4), 0 2px 18px rgba(0,0,0,0.85);
+}
+.cr-sub {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  color: var(--dim);
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+}
+.cr-role {
+  margin-top: 1.4rem;
+  font-size: clamp(0.75rem, 1.6vw, 0.95rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #7fb0cf;
+}
+.cr-name { font-size: clamp(0.85rem, 1.8vw, 1.05rem); color: var(--fg); letter-spacing: 0.04em; }
+.cr-gap  { color: var(--dim); opacity: 0.5; }
+.cr-fine {
+  margin-top: 1.4rem;
+  font-size: clamp(0.72rem, 1.4vw, 0.85rem);
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  font-style: italic;
+}
+
+@keyframes creditsRoll {
+  from { top: 100%; }
+  to   { top: -120%; }        /* fully off the top (column height-dependent; generous end) */
+}
+
+/* shield nav uses the shared .lab-nav / .proj-link projected-light grammar (anchored by --bx/--by
+   to the 4 LED marks). Just ensure it layers above the shield loop + credits. */
+.shield-nav { z-index: 6; }
+
+@media (prefers-reduced-motion: reduce) {
+  #shield-loop { transition: none; }
+  .shield-credits { transition: none; }
+  /* no long auto-scroll: show the credits block statically (centered) so nothing moves */
+  .shield-credits.is-rolling .credits-scroll { animation: none; top: 50%; transform: translate(-50%, -50%); }
+}

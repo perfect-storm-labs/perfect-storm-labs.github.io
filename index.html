@@ -153,6 +153,62 @@
          forge.mp4. (Only cut_1 is rendered so far; append cut_2.. as they land.) -->
     <video id="dest-video" class="bg-video" playsinline preload="none" controls hidden
            data-explore="assets/forge_cut_1.mp4,assets/forge_cut_2.mp4,assets/forge_cut_3.mp4"></video>
+
+    <!-- SHIELD PAYOFF — the bottom of the descent + the SECOND HUB.
+         When the last forge cut (forge_cut_3) ENDS on the shield-fully-present frame, JS swaps to
+         this seamless shield_loop (slow non-rotating beaker energy-pulse — the "alive" payoff;
+         frame-matched to cut_3's end, swap PSNR ~42dB). Same anti-flash grammar as the mirror
+         hub: starts transparent, fades in once it's painting. Then the credits roll, then the
+         4 LED-anchored nav links ignite. See webdev/world_notes.md §shield payoff beat. -->
+    <video id="shield-loop" class="bg-video" muted loop playsinline preload="none"
+           data-src="assets/shield_loop.mp4" hidden></video>
+
+    <!-- CREDITS ROLL — slow upward scroll over the live shield loop (silent-film bookend to the
+         opening title sequence + the CC-Attribution display beat). Rolls clear of the LED band;
+         the full durable attribution lives at credits.html (reached via the Credits nav link).
+         JS adds .is-rolling to start the scroll; .is-shown fades the layer in. -->
+    <div id="shield-credits" class="shield-credits" hidden aria-hidden="true">
+      <div class="credits-scroll">
+        <p class="cr-head">Perfect Storm Labs</p>
+        <p class="cr-sub">A FrankenBits Production</p>
+        <p class="cr-gap">·</p>
+        <p class="cr-role">Community Assets · CC Attribution</p>
+        <p class="cr-name">Inditiron Dradnon · Nikoleta Zhecheva · plaggy · TomasKiniulis</p>
+        <p class="cr-name">Samuel F. Angrick (Oneironauticus) · TrentPierce · Lashley</p>
+        <p class="cr-name">blanco.ger · Re1monsen · Ledeyer · Phillip Stephens</p>
+        <p class="cr-name">JmCVoyager · Bulat.Shakirov · YJ_ · DeepDown · Incg5764</p>
+        <p class="cr-gap">·</p>
+        <p class="cr-role">Built With</p>
+        <p class="cr-name">Twinmotion · Unreal Engine · Blender</p>
+        <p class="cr-name">Google Gemini · OpenAI ChatGPT · Amazon's Kiro</p>
+        <p class="cr-gap">·</p>
+        <p class="cr-role">Produced by</p>
+        <p class="cr-name">Paul Swisher · FrankenBits, LLC</p>
+        <p class="cr-gap">·</p>
+        <p class="cr-fine">Full attributions &amp; licenses → the Credits panel</p>
+      </div>
+    </div>
+
+    <!-- SHIELD NAV — 4 projected-light links anchored to the shield's 4 LED marks (measured from
+         the render: x22.6 / 36.6 / 65.6 / 80.4 %, LEDs at y~71%; labels sit ABOVE at by~66%).
+         Same cyan projected-light grammar as the lab hub. Ignites after the credits roll.
+           LED 1 (22.6%) → Credits        (→ credits.html)
+           LED 2 (36.6%) → Visit Reception (→ reception; built — wired when its clip lands)
+           LED 3 (65.6%) → Back to the top (→ exterior loop)
+           LED 4 (80.4%) → Command Central (grey/disabled — future, keycard-gated via Reception) -->
+    <nav id="shield-nav" class="lab-nav shield-nav" hidden>
+      <div class="projection">
+        <a class="proj-link" href="credits.html"
+           style="--bx:22.6%;--by:66%;--delay:160ms">Credits</a>
+        <button class="proj-link" data-goto="reception" type="button"
+           style="--bx:36.6%;--by:66%;--delay:0ms">Visit Reception</button>
+        <button class="proj-link" data-goto="loop" type="button"
+           style="--bx:65.6%;--by:66%;--delay:0ms">↩ Back to the top</button>
+        <button class="proj-link is-placeholder" type="button" disabled
+           style="--bx:80.4%;--by:66%;--delay:160ms">Command Central</button>
+      </div>
+    </nav>
+
     <button class="nav-link forge-back" data-goto="dive" type="button">↩ Back to the Lab</button>
   </section>
 

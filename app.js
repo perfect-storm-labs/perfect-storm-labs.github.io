@@ -27,6 +27,12 @@ const mirrorLoop    = document.getElementById("mirror-loop");
 const labNav        = document.getElementById("lab-nav");
 const wordmark      = document.querySelector(".proj-wordmark");
 
+/* Shield payoff beat (end of the forge journey): the seamless shield loop, the credits roll
+   overlay, and the 4-LED projected nav. Driven by startShieldPayoff() when the last forge cut ends. */
+const shieldLoop    = document.getElementById("shield-loop");
+const shieldCredits = document.getElementById("shield-credits");
+const shieldNav     = document.getElementById("shield-nav");
+
 /* ── TITLE SEQUENCE (movie intro) ───────────────────────────────
    Staged credit cards shown over the loop on EVERY arrival at the loop stage (fresh load AND
    "Back outside" return). Cards fade in/out one at a time, then the Enter button fades in.
@@ -337,7 +343,7 @@ function hideCard(done) {
      • { img: "assets/x.jpg" } → rendered image card (ornate silent-film art)
    Add/edit freely as cuts are rendered. */
 const FORGE_CARDS = [
-  "",                                       // before cut 2 (clean black hold)
+  "Meanwhile, in the Lab\u2026",             // before cut 2 (cut_2 opens on the arcane lab bench)
   { img: "assets/back_to_forge.jpg" },      // before cut 3 — "Back to the Forge.." rendered card
 ];
 
@@ -354,6 +360,7 @@ function parseCuts(value) {
 function playDestination() {
   destCuts = parseCuts(pendingDest && destVideo.dataset[pendingDest]);
   if (!destCuts.length) return;         // destination not built yet (e.g. lobby)
+  resetShieldPayoff();                  // clean slate so the shield beat replays on this journey
   elevatorVideo.hidden = true;
   destVideo.hidden = false;
   destIndex = 0;
@@ -373,9 +380,100 @@ function playCut(i) {
 
 destVideo.addEventListener("ended", () => {
   const next = destIndex + 1;
-  if (next >= destCuts.length) return;  // last cut → hold on final frame (controls available)
+  if (next >= destCuts.length) {        // LAST cut (forge_cut_3) ended on the shield frame →
+    startShieldPayoff();                // swap to the live shield loop + run the payoff beat
+    return;
+  }
   showIntertitle(next);                 // cover the swap/buffer, then play the next cut
 });
+
+/* ── SHIELD PAYOFF BEAT ─────────────────────────────────────────────────────
+   The bottom of the descent. forge_cut_3 ends on the shield fully present (no fade-to-black);
+   we swap to a seamless shield_loop (slow beaker energy-pulse — the "alive" second hub), hold a
+   short beat so the reveal lands, roll the credits over the loop (silent-film bookend + CC display),
+   then ignite the 4 LED-anchored projected nav. Anti-flash handoff mirrors the mirror settle→loop:
+   the loop starts transparent and is faded in only once it's actually painting, with cut_3's last
+   frame (held on #dest-video) underneath — so the swap is invisible even though they're two clips. */
+const SHIELD_BEAT_MS   = 2000;   // let the shield breathe before the credits roll
+const CREDITS_ROLL_MS  = 22000;  // keep in sync with .credits-scroll animation duration in CSS
+/* Nav ignites part-way through the credits roll and COEXISTS with it (no longer kills the credits —
+   they roll to completion and self-dismiss on animationend). ~7s in: enough credits have shown to
+   read, the nav joins below while they keep rolling above. Credits band = upper/mid; nav = lower. */
+const NAV_AFTER_CREDITS_START_MS = 7000;
+
+function startShieldPayoff() {
+  if (!ensureLoaded(shieldLoop)) {      // no shield_loop clip → stay on cut_3's last frame, still
+    runShieldCreditsThenNav();          // run credits + nav over the held frame (graceful fallback)
+    return;
+  }
+  shieldLoop.hidden = false;
+  shieldLoop.classList.remove("is-shown");   // start transparent (anti-flash)
+
+  let shown = false;
+  const showLoop = () => {
+    if (shown) return;
+    shown = true;
+    shieldLoop.classList.add("is-shown");     // fade loop in over cut_3's held last frame
+    setTimeout(() => { destVideo.hidden = true; }, 950);  // then drop the dest video underneath
+    shieldLoop.removeEventListener("playing", showLoop);
+    clearTimeout(loopFallback);
+    runShieldCreditsThenNav();                // start the timed beat once the loop is live
+  };
+  shieldLoop.addEventListener("playing", showLoop);
+  const loopFallback = setTimeout(showLoop, 1200);  // 'playing' may not fire fast → reveal anyway
+
+  shieldLoop.currentTime = 0;
+  const p = shieldLoop.play();
+  if (p) p.catch(() => { runShieldCreditsThenNav(); });  // autoplay blocked → still run the beat
+}
+
+/* beat → credits roll → nav ignite. Separated so both the real-loop and the fallback paths reuse it. */
+let shieldPayoffRan = false;
+function runShieldCreditsThenNav() {
+  if (shieldPayoffRan) return;          // guard: only once per journey (both event + fallback call it)
+  shieldPayoffRan = true;
+
+  // 1) short beat (shield breathes), 2) credits roll, 3) nav ignites after the roll.
+  setTimeout(() => {
+    if (shieldCredits) {
+      shieldCredits.hidden = false;
+      void shieldCredits.offsetWidth;              // reflow so the fade/scroll run
+      shieldCredits.classList.add("is-shown", "is-rolling");
+    }
+    // ignite the shield nav part-way through the roll (credits keep rolling/fading underneath)
+    setTimeout(revealShieldNav, NAV_AFTER_CREDITS_START_MS);
+  }, SHIELD_BEAT_MS);
+}
+
+/* reduced-motion / no-clip fallback also lands here; show nav without waiting on a long roll. */
+function revealShieldNav() {
+  if (shieldNav) shieldNav.hidden = false;
+  // Do NOT fade the credits out here — they should finish their roll naturally (yanking them
+  // mid-scroll looked wrong). The credits self-dismiss when their scroll animation ends (below).
+}
+
+/* when the credits scroll finishes, fade the layer out on its own (nav is already lit by now). */
+if (shieldCredits) {
+  shieldCredits.addEventListener("animationend", (e) => {
+    if (e.animationName === "creditsRoll") shieldCredits.classList.remove("is-shown");
+  });
+}
+
+/* reset the shield payoff so re-entering the forge journey replays it cleanly (mirrors resetHub). */
+function resetShieldPayoff() {
+  shieldPayoffRan = false;
+  if (shieldLoop) {
+    shieldLoop.pause();
+    shieldLoop.classList.remove("is-shown");
+    shieldLoop.hidden = true;
+    try { shieldLoop.currentTime = 0; } catch (_) {}
+  }
+  if (shieldCredits) {
+    shieldCredits.classList.remove("is-shown", "is-rolling");
+    shieldCredits.hidden = true;
+  }
+  if (shieldNav) shieldNav.hidden = true;
+}
 
 /* Show the silent-film card, preload the next cut underneath, then play it once BOTH the minimum
    beat has elapsed AND the next cut can play through (whichever is longer). */
@@ -395,9 +493,12 @@ function showIntertitle(nextIndex) {
   void intertitle.offsetWidth;
   intertitle.classList.add("is-shown");
 
-  // preload the next cut while the card is up (decode its first frame behind the card)
-  destVideo.src = destCuts[nextIndex];
-  destVideo.load();
+  // ANTI-FLASH: the card fades in over ~0.45s (CSS transition). Do NOT swap destVideo.src until
+  // the card is actually OPAQUE — otherwise setting .src + .load() repaints #dest-video with the
+  // next cut's first frame WHILE the card is still semi-transparent, so it flashes THROUGH the
+  // card (the "cut_2 shows before Meanwhile" bug). Wait out the fade, then load behind the opaque
+  // card. INTERTITLE_FADE_MS must match the .intertitle opacity transition in styles.css (0.45s).
+  const INTERTITLE_FADE_MS = 450;
 
   let ready = false;
   let beatDone = false;
@@ -427,10 +528,20 @@ function showIntertitle(nextIndex) {
     if (p) p.catch(() => { reveal(); }); // autoplay blocked → lift card, controls shown
   };
   const onReady = () => { ready = true; tryAdvance(); };
-  destVideo.addEventListener("canplaythrough", onReady);
-  // safety: if canplaythrough never fires (some browsers are stingy), proceed after a cap
-  readyCap = setTimeout(onReady, 8000);
-  setTimeout(() => { beatDone = true; tryAdvance(); }, CARD_MIN_MS);
+
+  // Preload + decode the next cut ONLY ONCE THE CARD IS OPAQUE (after the fade-in), so its first
+  // frame paints behind a card that already fully covers the screen.
+  setTimeout(() => {
+    destVideo.src = destCuts[nextIndex];
+    destVideo.load();
+    destVideo.addEventListener("canplaythrough", onReady);
+    // safety: if canplaythrough never fires (some browsers are stingy), proceed after a cap
+    readyCap = setTimeout(onReady, 8000);
+  }, INTERTITLE_FADE_MS);
+
+  // the minimum card beat is measured from the card becoming opaque too (so short loads still
+  // get the stylistic hold AFTER the fade, not during it)
+  setTimeout(() => { beatDone = true; tryAdvance(); }, INTERTITLE_FADE_MS + CARD_MIN_MS);
 }
 
 function hideIntertitle(done) {
@@ -581,14 +692,26 @@ document.querySelectorAll("[data-goto]").forEach((btn) => {
       elevatorVideo.addEventListener("canplay", liftOnElevator, { once: true });
       setTimeout(liftOnElevator, 2500); // hard fallback so the card never sticks
       startJourney("explore");          // take the elevator → reception (forge clip stand-in for now)
+    } else if (dest === "reception") {
+      // Visit Reception — the research-access gate (built in Twinmotion; its clip isn't wired into
+      // the site yet). Graceful placeholder until assets/reception.mp4 lands: when it exists, make
+      // this a destination like "explore" (startJourney("reception") with data-reception on
+      // #dest-video). For now, no-op with a console note so the link never strands the visitor.
+      // TODO(reception): render reception.mp4 (doors-open-from-black) → add data-reception on
+      //   #dest-video → swap this branch to the elevator-journey pattern used by "explore".
+      console.info("[FrankenBits] Reception clip not wired yet — render reception.mp4 + add data-reception.");
     } else if (dest === "loop") {
       pauseHub();                       // leaving the lab → stop the hub
+      shieldLoop.pause();               // and the shield loop, if we came from the shield payoff
+      resetShieldPayoff();
       showStage("loop");
       runTitleSequence();               // movie-intro: replay the title cards on every return
     } else if (dest === "dive") {
       // back to the lab = the live mirror-ball hub (don't re-run the dive or elevator).
       // Resume directly at the LOOP (skip replaying the one-time settle on return). Balls are
       // already settled here, so reveal the nav immediately rather than waiting on loop-start.
+      shieldLoop.pause();               // stop the shield loop if returning from the shield payoff
+      resetShieldPayoff();
       showStage("dive");
       elevatorVideo.pause();
       destVideo.pause();
