@@ -32,6 +32,7 @@ const wordmark      = document.querySelector(".proj-wordmark");
 const shieldLoop    = document.getElementById("shield-loop");
 const shieldCredits = document.getElementById("shield-credits");
 const shieldNav     = document.getElementById("shield-nav");
+const forgeSkip     = document.getElementById("forge-skip");  // "Skip to the End" (jumps to payoff)
 
 /* ── TITLE SEQUENCE (movie intro) ───────────────────────────────
    Staged credit cards shown over the loop on EVERY arrival at the loop stage (fresh load AND
@@ -374,9 +375,26 @@ function playCut(i) {
   destVideo.src = destCuts[i];
   destVideo.load();
   destVideo.currentTime = 0;
+  if (forgeSkip) forgeSkip.hidden = false;   // a cut is playing → offer "Skip to the End"
   const p = destVideo.play();
   if (p) p.catch(() => {});             // autoplay/decode blocked → controls shown; user presses play
 }
+
+/* "Skip to the End" → jump past the rest of the forge journey straight to the shield payoff.
+   Stops the current cut, hides the skip button, and runs the payoff (shield loop → credits → nav),
+   exactly as if the last cut had ended naturally. Guarded so it's a no-op if the payoff already ran. */
+function skipToPayoff() {
+  if (shieldPayoffRan) return;
+  if (forgeSkip) forgeSkip.hidden = true;
+  destVideo.pause();
+  // if a between-cuts intertitle card is up (skip pressed mid-gap), drop it so it doesn't linger
+  // over the payoff. hideIntertitle fades it out; harmless if it's already hidden.
+  hideIntertitle();
+  // make sure the autochain's 'ended' handler won't also fire a second payoff mid-skip
+  destIndex = destCuts.length - 1;
+  startShieldPayoff();
+}
+if (forgeSkip) forgeSkip.addEventListener("click", skipToPayoff);
 
 destVideo.addEventListener("ended", () => {
   const next = destIndex + 1;
@@ -402,6 +420,7 @@ const CREDITS_ROLL_MS  = 22000;  // keep in sync with .credits-scroll animation 
 const NAV_AFTER_CREDITS_START_MS = 7000;
 
 function startShieldPayoff() {
+  if (forgeSkip) forgeSkip.hidden = true;   // past the journey now → no more "skip"
   if (!ensureLoaded(shieldLoop)) {      // no shield_loop clip → stay on cut_3's last frame, still
     runShieldCreditsThenNav();          // run credits + nav over the held frame (graceful fallback)
     return;
@@ -473,6 +492,7 @@ function resetShieldPayoff() {
     shieldCredits.hidden = true;
   }
   if (shieldNav) shieldNav.hidden = true;
+  if (forgeSkip) forgeSkip.hidden = true;   // hidden until a cut plays again (playCut shows it)
 }
 
 /* Show the silent-film card, preload the next cut underneath, then play it once BOTH the minimum

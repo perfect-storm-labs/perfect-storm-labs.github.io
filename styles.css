@@ -124,7 +124,8 @@ html, body {
 .title-band {
   position: relative;
   width: 100%;
-  height: 9rem;                /* fixed stage height → brand/button never shift as cards cycle */
+  height: 11rem;               /* fixed stage height → button never shifts as cards cycle. Grown
+                                  from 9rem to fit the final card's stacked brand + identity line. */
   display: block;
 }
 .title-card {
@@ -141,9 +142,15 @@ html, body {
 }
 .title-card.is-shown { opacity: 1; }
 
-/* identity / studio title (big) */
+/* ── PER-CARD TYPE SCALE ─────────────────────────────────────────────────────
+   The FRANKENBITS brand is no longer ever-present above the cards, so each card stands alone and
+   needs its own weight in the arc: understated studio bumper → mood line → the discipline (main +
+   smaller sub) → tiny production credit → the IDENTITY payoff (brand + Perfect Storm Labs). The
+   `.title-lab` base is the mid "big line"; per-card overrides below tune the hierarchy. */
+
+/* base "big line" (default for a card's primary line) */
 .title-lab {
-  font-size: clamp(1.6rem, 4.5vw, 3rem);
+  font-size: clamp(1.4rem, 4vw, 2.6rem);
   font-weight: 300;
   letter-spacing: 0.18em;
   padding-left: 0.18em;
@@ -151,6 +158,54 @@ html, body {
   text-shadow: 0 0 24px rgba(120, 200, 255, 0.35);
   text-align: center;
 }
+
+/* Card 1 — studio bumper: subordinate to the big lines but comfortably readable (bumped up). */
+[data-title-card="1"] .title-lab {
+  font-size: clamp(1.3rem, 3.4vw, 2.1rem);
+  color: var(--dim);
+  letter-spacing: 0.2em;
+}
+
+/* Card 2 — the invitation: serif-italic mood line (sets tone, not a headline) */
+[data-title-card="2"] .title-lab {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: clamp(1.2rem, 3.2vw, 2rem);
+  letter-spacing: 0.08em;
+  padding-left: 0;
+  color: var(--accent);
+}
+
+/* Card 3 — the discipline: main line mid-size, the B2B line a smaller subordinate (was wrongly
+   rendering big because it carried .title-lab; scope it down here). */
+[data-title-card="3"] .title-lab {
+  font-size: clamp(1.2rem, 3.2vw, 2.1rem);
+}
+[data-title-card="3"] .title-sub-b2b {
+  font-size: clamp(0.8rem, 1.9vw, 1.05rem);
+  color: #7fb0cf;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+
+/* Card 5 — the identity payoff: brand prominent but SIZED TO FIT the band above the Perfect Storm
+   Labs line (smaller than the old standalone hero brand), identity line as the resolving sub. */
+[data-title-card="5"] .brand {
+  font-size: clamp(1.8rem, 5vw, 3.4rem);
+  letter-spacing: 0.3em;
+  padding-left: 0.3em;
+  font-weight: 300;
+  margin: 0;
+  text-shadow: 0 0 28px rgba(120, 200, 255, 0.4), 0 2px 24px rgba(0,0,0,0.9);
+}
+[data-title-card="5"] .title-lab {
+  font-size: clamp(1rem, 2.6vw, 1.5rem);
+  letter-spacing: 0.24em;
+  padding-left: 0.24em;
+  color: var(--accent);
+}
+
 .title-sub {
   color: var(--dim);
   font-size: clamp(0.8rem, 1.9vw, 1.05rem);
@@ -165,7 +220,7 @@ html, body {
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
   color: var(--dim);
-  font-size: clamp(0.85rem, 2vw, 1.15rem);
+  font-size: clamp(1.1rem, 2.8vw, 1.7rem);
   letter-spacing: 0.1em;
   text-align: center;
 }
@@ -383,6 +438,17 @@ html, body {
   position: absolute;
   z-index: 3;
   top: 1.5rem;
+  left: 1.5rem;
+  margin: 0;
+}
+
+/* SKIP button — directly beneath "Back to the Lab" (same top-left corner), jumps to the end of
+   the forge journey (the shield payoff). Matches .forge-back exactly (same .nav-link size/weight);
+   only the top offset differs so it stacks beneath. */
+.forge-skip {
+  position: absolute;
+  z-index: 3;
+  top: 4.6rem;            /* stacked just under .forge-back (1.5rem top + its height + a small gap) */
   left: 1.5rem;
   margin: 0;
 }

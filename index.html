@@ -41,7 +41,7 @@
          TODO(skip): wire a click/keydown on #stage-loop to fast-forward the sequence (jump to the
          final card + reveal Enter). Left as a follow-up per design note. -->
     <div class="overlay" id="title-overlay">
-      <h1 class="brand">FRANKENBITS</h1>
+      <!-- <h1 class="brand">FRANKENBITS</h1> -->
 
       <!-- TITLE BAND: fixed-height stage so cycling cards never change the overlay height
            (that height change was bouncing the brand above). All cards stack in this band. -->
@@ -53,13 +53,13 @@
 
         <!-- Card 2: the identity -->
         <div class="title-card" data-title-card="2" aria-hidden="true">
-          <p class="title-lab">Perfect Storm Labs</p>
+          <p class="title-lab">an experiment in presentation</p>
         </div>
 
         <!-- Card 3: the discipline -->
         <div class="title-card" data-title-card="3" aria-hidden="true">
-          <p class="title-sub">Acoustic Detection &amp; Research</p>
-          <p class="title-sub title-sub-b2b">Engineering Business-to-Business Engagement</p>
+          <p class="title-lab">Acoustic Detection &amp; Research</p>
+          <p class="title-lab title-sub-b2b">Engineering Business-to-Business Engagement</p>
         </div>
 
         <!-- Card 4: production credit -->
@@ -69,6 +69,7 @@
 
         <!-- Card 5: final identity (persists; Enter reveals under it) -->
         <div class="title-card" data-title-card="5" aria-hidden="true">
+          <h1 class="brand">FRANKENBITS</h1>
           <p class="title-lab">Perfect Storm Labs</p>
         </div>
       </div>
@@ -194,7 +195,8 @@
          Same cyan projected-light grammar as the lab hub. Ignites after the credits roll.
            LED 1 (22.6%) → Credits        (→ credits.html)
            LED 2 (36.6%) → Visit Reception (→ reception; built — wired when its clip lands)
-           LED 3 (65.6%) → Back to the top (→ exterior loop)
+           LED 3 (65.6%) → Back to the Lab (→ dive/mirror-ball hub, one level up — not all the
+                           way outside; returning up the descent reads as "navigate", not "reset")
            LED 4 (80.4%) → Command Central (grey/disabled — future, keycard-gated via Reception) -->
     <nav id="shield-nav" class="lab-nav shield-nav" hidden>
       <div class="projection">
@@ -202,14 +204,18 @@
            style="--bx:22.6%;--by:66%;--delay:160ms">Credits</a>
         <button class="proj-link" data-goto="reception" type="button"
            style="--bx:36.6%;--by:66%;--delay:0ms">Visit Reception</button>
-        <button class="proj-link" data-goto="loop" type="button"
-           style="--bx:65.6%;--by:66%;--delay:0ms">↩ Back to the top</button>
+        <button class="proj-link" data-goto="dive" type="button"
+           style="--bx:65.6%;--by:66%;--delay:0ms">↩ Back to the Lab</button>
         <button class="proj-link is-placeholder" type="button" disabled
            style="--bx:80.4%;--by:66%;--delay:160ms">Command Central</button>
       </div>
     </nav>
 
     <button class="nav-link forge-back" data-goto="dive" type="button">↩ Back to the Lab</button>
+    <!-- SKIP: jump past the rest of the forge journey straight to the shield payoff (the end).
+         Sits directly under "Back to the Lab" (same corner, projected-button grammar). Hidden until
+         a cut is actually playing (JS shows it in playCut, hides it once the payoff starts). -->
+    <button class="nav-link forge-skip" id="forge-skip" type="button" hidden>Skip to the End ⏭</button>
   </section>
 
   <!-- SILENT-FILM INTERTITLE (top-level overlay so it can cover ANY stage) ─────────────────────
